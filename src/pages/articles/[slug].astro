@@ -1,0 +1,85 @@
+---
+// ここにJavaScriptを記述
+
+import Layout from "../../layouts/Layout.astro";
+import { newtClient } from "../../lib/newt";
+import type { Article } from "../../lib/newt";
+
+export const prerender = true;
+
+// ページのPathを生成
+export const getStaticPaths = async () => {
+  const { items: articles } = await newtClient.getContents<Article>({
+    appUid: "blog",
+    modelUid: "article",
+    query: {
+      select: ["title", "slug", "body"],
+    },
+  });
+
+  return articles.map((article) => ({
+    params: {
+      slug: article.slug,
+    },
+    // 各ページに対してPropsを定義(next.jsでいうgetStaticPropsの戻り値)
+    props: {
+      article,
+    },
+  }));
+};
+
+const { article } = Astro.props;
+---
+
+<Layout title={article.title} description="hogehoge">
+  <main>
+    <h1>{article.title}</h1>
+    <!-- <article>{article.body}</article> -->
+    <article set:html={article.body} />
+  </main>
+</Layout>
+
+<style>
+  main {
+    margin: auto;
+    padding: 1.5rem;
+    max-width: 60ch;
+  }
+  h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin: 0;
+  }
+  .text-gradient {
+    background-image: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 400%;
+    background-position: 0%;
+  }
+  .instructions {
+    line-height: 1.6;
+    margin: 1rem 0;
+    border: 1px solid rgba(var(--accent), 25%);
+    background-color: white;
+    padding: 1rem;
+    border-radius: 0.4rem;
+  }
+  .instructions code {
+    font-size: 0.875em;
+    font-weight: bold;
+    background: rgba(var(--accent), 12%);
+    color: rgb(var(--accent));
+    border-radius: 4px;
+    padding: 0.3em 0.45em;
+  }
+  .instructions strong {
+    color: rgb(var(--accent));
+  }
+  .link-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
+    gap: 1rem;
+    padding: 0;
+  }
+</style>
